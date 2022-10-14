@@ -1,0 +1,193 @@
+---
+title: Plotting Data ggplot2 Basics
+---
+
+
+Base R offers several basic plotting functions but in this course we will be focusing on using [ggplot2](http://ggplot2.tidyverse.org/) for plotting. A basic introduction can be found here, http://r4ds.had.co.nz/data-visualisation.html.  
+
+## ggplot2 Basics 
+A basic ggplot2 call
+
+```{r}
+library(tidyverse) #this will load readr, dplyr, and tidyr
+ts_longFormat = read_tsv("datasets/time.series.data.txt") %>% 
+  rename(gene = ...1) %>% 
+  gather(Condition, expression, 2:ncol(.) ) %>% 
+  separate(Condition, c("exposure", "time") )  %>% 
+  mutate(time = as.numeric(gsub("h", "", time) ) )
+ts_longFormat
+
+```
+
+```{r, fig.width=8, fig.height=8}
+# filter data to gene of interest 
+ts_longFormat_SOD2 = ts_longFormat %>% 
+  filter("SOD2" == gene)
+
+ggplot(ts_longFormat_SOD2) + 
+  geom_point(aes(x = time, y = expression) )
+```
+
+ggplot2 is based off of what is called Grammar of Graphics (hence gg plot), which is a book by Leland Wilkinson  https://www.amazon.com/Grammar-Graphics-Statistics-Computing/dp/0387245448. The philosophy of the book is that you should have a plotting system that allows you to simply describe what the plot should be based on and the computer will take care of it.
+
+Of note, ggplot2 is the name of the library but the function call itself is `ggplot()` and not `ggplot2()`.  
+
+ggplot2 works best by working on a long-format data frame, you then describe all layers on the plot, you add each layer with another geom_[TYPE] functions. There are many layers available, see http://ggplot2.tidyverse.org/reference/index.html#section-layer-geoms for a list and examples of each. 
+
+```{r, fig.width=8, fig.height=8}
+ggplot(ts_longFormat_SOD2) + 
+  geom_point(aes(x = time, y = expression) ) + 
+  geom_line(aes(x = time, y = expression) )
+```
+
+Below is a diagram of how a generic ggplot2 is structured. The aspects of the plot that you want to map to specific column in the data frame are given in the aes() call within the layer calls, (aes is short for aesthetic).  
+
+![](image_workzone/ggplot_call_1/ggplot_call_1.001.jpeg)
+
+If the mapping aesthetics are shared between layers you can give them in the top `ggplot()` call and they will be applied to each layer. 
+
+![](image_workzone/ggplot_example_3.png)
+
+
+```{r, fig.width=8, fig.height=8}
+ggplot(ts_longFormat_SOD2, aes(x = time, y = expression)) + 
+  geom_point() + 
+  geom_line()
+```
+
+Now clearly this plot is not what we actually want to display, we are ignoring the exposure variable and this is causing the plot to look funny, so let's tell ggplot that we have a grouping variable, exposure.  
+
+```{r, fig.width=8, fig.height=8}
+ggplot(ts_longFormat_SOD2, aes(x = time, y = expression, group = exposure)) + 
+  geom_point() + 
+  geom_line()
+```
+
+Now let's add some coloring to make this plot a little more exciting.  
+```{r, fig.width=8, fig.height=8}
+ggplot(ts_longFormat_SOD2, aes(x = time, y = expression, group = exposure, color = exposure)) + 
+  geom_point() + 
+  geom_line()
+```
+
+Also when you add plotting aspects like coloring, ggplot2 assumes that this is also a grouping variable so you no longer have to supply grouping if you are giving a coloring variable.  
+```{r, fig.width=8, fig.height=8}
+plotSod2 = ggplot(ts_longFormat_SOD2, aes(x = time, y = expression, color = exposure)) + 
+  geom_point() + 
+  geom_line()
+```
+
+## Modifying colors 
+Now the default color variables kind of leave a lot to be desired and we can set these colors to something else by using ggplot2's scale_color_[FUNC_NAME] to change the color plotting aspects. Here we are using the colors supplied by RColorBrewer, which you use by using `scale_color_brewer()`. 
+```{r, fig.width=8, fig.height=8}
+ggplot(ts_longFormat_SOD2, aes(x = time, y = expression, color = exposure)) + 
+  geom_point() + 
+  geom_line() + 
+  scale_color_brewer(palette = "Dark2")
+```
+The color brewer palettes were developed by Martin Krzywinski on which he wrote a Nature paper on the subject, certain palettes were developed to be color blind safe, more information about his work can be found here http://mkweb.bcgsc.ca/colorblind/ and a website for helping choosing colors can be found here http://colorbrewer2.org/.  
+
+For more information on how you can change the color other than `scale_color_brewer()` see here http://ggplot2.tidyverse.org/reference/index.html#section-scales. 
+
+### Setting colors manually  
+As most PIs are extremely picky about colors, there are also easy ways of setting specific colors for specific grouping using `scale_color_manual()`.  
+
+```{r, fig.width=8, fig.height=8}
+exposureColors = c("#005AC8", "#AA0A3C", "#0AB45A", "#14D2DC") 
+
+ggplot(ts_longFormat_SOD2, aes(x = time, y = expression, color = exposure)) + 
+  geom_point() + 
+  geom_line() + 
+  scale_color_manual(values = exposureColors)
+
+```
+
+The above will assign the colors in the order they appear in the data frame and you can make it sure it doesn't matter the order or if certain levels are missing (which could then mess up the ordering) you can name the color vector so that coloring is consistent. 
+
+```{r, fig.width=8, fig.height=8}
+exposureColors = c("#005AC8", "#AA0A3C", "#0AB45A", "#14D2DC", "#8214A0") 
+names(exposureColors) = c("Ctrl", "R848", "Ifnb", "Lps", "other") 
+
+ggplot(ts_longFormat_SOD2, aes(x = time, y = expression, color = exposure)) + 
+  geom_point() + 
+  geom_line() + 
+  scale_color_manual(values = exposureColors)
+
+```
+
+If you don't name one of the layer it will not get a color, so be careful of case etc. 
+```{r, fig.width=8, fig.height=8}
+exposureColors = c("#005AC8", "#AA0A3C", "#0AB45A", "#14D2DC", "#8214A0") 
+names(exposureColors) = c("Ctrl", "R848", "Ifnb", "LPS", "other") 
+
+ggplot(ts_longFormat_SOD2, aes(x = time, y = expression, color = exposure)) + 
+  geom_point() + 
+  geom_line() + 
+  scale_color_manual(values = exposureColors)
+
+```
+
+
+## Changing point shape and line types 
+
+```{r, fig.width=8, fig.height=8}
+ts_longFormat_SOD2_CD74 = ts_longFormat %>% 
+  filter("SOD2" == gene | "CD74" == gene) # taking advantage of the or operator to do a check for either
+
+# also you can also the %in% operator that R offers 
+ts_longFormat_SOD2_CD74 = ts_longFormat %>% 
+  filter(gene %in% c("SOD2", "CD74") )
+
+# create a grouping variable to make plotting easier 
+ts_longFormat_SOD2_CD74 = ts_longFormat_SOD2_CD74 %>% 
+  mutate(grouping = paste0(gene, "-", exposure))
+
+# using group = grouping to separate out the different genes and the exposure but still color by exposure 
+ggplot(ts_longFormat_SOD2_CD74, aes(x = time, y = expression, color = exposure, group = grouping)) + 
+  geom_point() + 
+  geom_line() + 
+  scale_color_brewer(palette = "Dark2")
+
+```
+
+But just coloring by exposure we can't tell which lines and points are from which genes so lets change the shape and line types so we distinguish 
+
+```{r, fig.width=8, fig.height=8}
+ggplot(ts_longFormat_SOD2_CD74, aes(x = time, y = expression, color = exposure, group = grouping)) + 
+  geom_point(aes(shape = gene)) + 
+  geom_line(aes(linetype = gene)) + 
+  scale_color_brewer(palette = "Dark2")
+
+```
+
+## Changing plot aspect not dependent on input data  
+If you want to change certain aspect about the plot that doesn't depend on mapping data from the input data frame you put these setting on the output of the `aes()` call.  
+
+![](image_workzone/ggplot_example_4.png)
+
+```{r, fig.width=8, fig.height=8}
+# make the points larger, the value given to size is a relative number  
+ggplot(ts_longFormat_SOD2_CD74, aes(x = time, y = expression, color = exposure, group = grouping)) + 
+  geom_point(aes(shape = gene), size = 3) + 
+  geom_line(aes(linetype = gene)) + 
+  scale_color_brewer(palette = "Dark2")
+
+```
+
+You can also then change the linetypes and shapes with scale_ functions  
+
+```{r, fig.width=8, fig.height=8}
+geneLinetypes =c("dotted", "solid")
+names(geneLinetypes) = c("CD74", "SOD2")
+# make the points larger, the value given to size is a relative number  
+ggplot(ts_longFormat_SOD2_CD74, aes(x = time, y = expression, color = exposure, group = grouping)) + 
+  geom_point(aes(shape = gene), size = 3) + 
+  geom_line(aes(linetype = gene)) + 
+  scale_color_brewer(palette = "Dark2") + 
+  scale_shape_manual(values = c(1, 3)) + 
+  scale_linetype_manual(values = geneLinetypes)
+
+```
+
+
+

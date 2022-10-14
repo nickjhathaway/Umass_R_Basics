@@ -1,0 +1,120 @@
+---
+title: "Scripting and Markdown Documents"
+---
+
+
+## Scripting
+Like most scientific fields we are always concerned with reproducibility and to that in a programming language like R you accomplish reproducibility by putting all your code into what is called scripts. To create a new R script in RStudio you simply click the `+` sign in the upper left hand corner and click `R Script` or you can use the hotkey shortcut of `Cmd + shift + n`.  
+
+## Generic Layout of a script 
+To make your life easier and the life of anyone looking at your scripts easier you normally want to keep them fairly organized. A normal layout is to have all packages or other files you will be using. Next comes any code that deals with reading and tidying up data tables. Then comes the code that does actually analysis followed by any code that writes tables or creates figures.  
+
+### Commenting
+To make your code more readable by other people it's good practice to do what is called commenting of your code. To do this you use the `#` symbol, whenever R sees the symbol '#' it completely ignores everything that comes after it until the next line
+
+```{r}
+#this will be ignored
+print("hello") # this will also be ignored
+```
+
+## Path
+When someone refers to a `path` they are normally talking about the location of a file or folder on a filesystem. Depending on the operating system (Windows vs Unix based(Mac, Ubuntu, etc.)) this will be represented slightly differently, specifically the use of `"/"`(Unix) vs `"\"` (Windows).  Luckily R takes care of this subtlety for you and you can also use `"/"`. Another piece of terminology that is important is folders are also referred to as directories. The path is represented by naming the parent directories to a file and the path to file/folder can be relative to your current working directory (more on this below). Also giving only `"/"` is considered the very top of your filesystem or the "root" position. An easy way to show this is to use the function `list.files()` 
+
+```{r}
+print(list.files("/"))
+```
+
+Two other important pieces of information is the special way to refer to the current directory (`"."`) and the directory above the current directory (`".."`). Again lets use the list.files. 
+
+```{r}
+print(list.files(".",full.names = T))
+```
+
+```{r}
+print(list.files("..",full.names = T))
+print(getwd())
+```
+Another way to explore this idea is to use the `file.choose()` method, which actually just returns the path to whatever file you choose.
+
+```{r, eval = FALSE}
+print(file.choose())
+```
+```{r,engine='bash',echo=FALSE}
+echo "[1] \"/Users/nick/ownCloud/documents/exp_design_and_data_analysis_bootcamp_2016/introToR/time.series.data.txt\""
+```
+
+### Relative Path  
+
+All paths are also relative to the current R Script and it's good practice to organze your data to be in the same folder as your scripts or in a folder underneath it. 
+
+## Setting/Getting Working Directory
+When working within R you have a working directory, which is where things will be output and this affects how you specify a location's path because it will be relative to this working directory. To get the working directory you use the function `getwd()`. 
+
+```{r}
+getwd()
+```
+
+
+You can also set your working directory by using the function `setwd()` and giving it the path to a new directory. It might be useful to save your old working directory
+```{r}
+outWd = getwd()
+
+setwd("/")
+list.files(".")
+print(getwd())
+
+setwd(outWd)
+list.files(".")
+print(getwd())
+
+```
+
+
+
+## RMarkdown annd Quarto  
+
+[Markdown](https://en.wikipedia.org/wiki/Markdown) is the term for a way of writing plain text files with certain syntax that when given to a program will render the contents into a rich document, like an HTML document. Many different flavors of Markdown exist but most follow similar rules. RMarkdown is a flavor of markdown that allows for inserting R Code into the document that will then run and the output of the code will be captured and placed into the final document. This is a great way to create an information document for your R code, creating R examples, and because the final output is an HTML document they can include interactive graphs and tables that R helps to create. In fact all Session pages so far have been created by using RMarkdown, for example here is the document that created this page itself [Session 6](Session_5.Rmd).  
+
+There are many features offered by RMarkdown, here are a few cheatsheets that RStudio offers that help and are great references guides, https://www.rstudio.com/wp-content/uploads/2015/02/rmarkdown-cheatsheet.pdf and https://www.rstudio.com/wp-content/uploads/2015/03/rmarkdown-reference.pdf. 
+
+Below is an example of how text looks like rendering and how syntax controls the output
+
+![](images/example_r_markdown.png) 
+
+Within RStudio you can create a new RMarkdown by click the + symbol in the top left corner. And you normally just pick HTML for output. When you do this, RStudio will ask to install the libraries needed to create RMarkdowns.   
+
+![](images/new_r_markdown.png)
+
+![](images/new_r_markdown_2.png)
+
+Below is the default RMarkdown document created when creating a new Document 
+
+![](images/RMarkdown_layout/RMarkdown_layout.001.jpeg)
+
+## R Code Chunks  
+Below is an example of a R code chunk 
+
+![](images/r_chuncks/r_chuncks.001.jpeg)
+
+Important nodes of about r chunks 
+
+*  The whole document is ran in a brand new R Session and therefore libraries need to be loaded at the beginning of the document  
+*  Each r code is ran in the same R Session, meaning all the R code is ran as if it you took all the R code and pasted into one R script and ran it  
+*  When naming chunks, the name must always be unique (the name above for this chunk is pressure and cannot be used again)  
+*  Options given to the chunk are separated by commas 
+*  The working directory of the R code executed is the directory where the RMarkdown document is located 
+*  The resulting output document is in the same directory as the RMarkdown document. 
+
+Some important and commonly used options to 
+
+*  **echo** - This will control if the R code itself is shown in the output document (by default it is)  
+*  **eval** - This will control if the R code is executed, if this is set to FALSE the code will be shown but not executed (this might be good for when trying to show R examples but don't want the code to execute)  
+*  **fig.width** - This will affect the width of the captured output of the code chunk, important for plots   
+*  **fig.height** - This will affect the height of the captured output of the code chunk, important for plots   
+
+And there are many more options, see the reference/cheatsheets for examples.
+
+Once you want to create the output document, you hit the knit button. 
+
+
+

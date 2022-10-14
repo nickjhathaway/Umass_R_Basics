@@ -1,0 +1,54 @@
+project:
+  type: book
+  output-dir: "R_Umass_Basics"
+  resources: ["datasets"]
+
+book:
+  title: "Umass R Basics"
+  author: "Nicholas Hathaway"
+  date: "10/12/2022"
+  chapters:
+    - index.qmd
+    - part: "Intro"
+      chapters:
+        - R_via_RStudio.qmd
+        - Basic_R_Usage.qmd
+        - Scripting_and_markdown.qmd
+        - InstallingPackages_and_Tidyverse.qmd
+    - part: "Data Import and Manupilation"
+      chapters:
+        - Reading_In_Data.qmd
+        - Accessing_Data.qmd
+        - Wrangling_data.qmd
+        # - empty-1.qmd
+    - part: "Plotting"
+      chapters:
+        - Plotting_data_ggplot2Basics.qmd
+        - Plotting_data_additional_examples.qmd
+    - part: "Info"
+      chapters:
+      - references.qmd
+      - r_session_info.qmd
+
+bibliography: references.bib
+
+format:
+  html:
+    theme: journal
+    css: styles.css
+    fig-height: 10
+    fig-width: 15
+    toc: true
+    toc-depth: 4 # default is 3
+    toc-title: Contents
+    anchor-sections: true
+    smooth-scroll: true
+    embed-resources: true
+    standalone: true
+    highlight-style: textmate
+    page-layout: full
+    code-link: true
+    code-tools: true
+
+
+

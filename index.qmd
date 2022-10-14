@@ -1,0 +1,29 @@
+--- 
+title: "Intro To R"
+author: "Nicholas Hathaway "
+date: "`r Sys.Date()`"
+documentclass: book
+bibliography: [references.bib]
+# url: your book url like https://bookdown.org/yihui/bookdown
+cover-image: UMassChanLogo.jpg
+description: |
+  R: Basic Introduction to using R for data analysis 
+from: markdown+emoji
+---
+```{r setup, echo=F, message=F, warning=F}
+suppressWarnings(suppressMessages(source("common.R")))
+```
+
+# Preface {.unnumbered}
+
+There are a million and 1 intro to R resources out there and so here comes yet another one. :sunglasses: 
+
+
+This resource isn't going to add too much more than <https://r4ds.had.co.nz/> which is an excellent resource and reference. The purpose of this resource is to be able to adapt to the needs and feedback from participants at Umass. 
+
+
+```{r include=FALSE}
+# automatically create a bib database for R packages
+knitr::write_bib(packagesUsed, 'packages.bib')
+```
+

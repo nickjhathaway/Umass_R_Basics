@@ -1,0 +1,570 @@
+---
+title: Additonal ggplot2 basic examples
+---
+
+## Data 
+
+```{r}
+library(tidyverse) #this will load readr, dplyr, and tidyr
+ts_longFormat = read_tsv("datasets/time.series.data.txt") %>% 
+  rename(gene = ...1) %>% 
+  gather(Condition, expression, 2:ncol(.) ) %>% 
+  separate(Condition, c("exposure", "time") )  %>% 
+  mutate(time = as.numeric(gsub("h", "", time) ) )
+
+ts_longFormat_SOD2_CD74 = ts_longFormat %>% 
+  filter("SOD2" == gene | "CD74" == gene) # taking advantage of the or operator to do a check for either
+
+# also you can also the %in% operator that R offers 
+ts_longFormat_SOD2_CD74 = ts_longFormat %>% 
+  filter(gene %in% c("SOD2", "CD74") )
+
+# create a grouping variable to make plotting easier 
+ts_longFormat_SOD2_CD74 = ts_longFormat_SOD2_CD74 %>% 
+  mutate(grouping = paste0(gene, "-", exposure))
+
+ts_longFormat_SOD2 = ts_longFormat %>% 
+  filter("SOD2" == gene)
+```
+
+## Lineplot 
+
+```{r, fig.width=8, fig.height=8}
+geneLinetypes =c("dotted", "solid")
+names(geneLinetypes) = c("CD74", "SOD2")
+# make the points larger, the value given to size is a relative number  
+ggplot(ts_longFormat_SOD2_CD74, aes(x = time, y = expression, color = exposure, group = grouping)) + 
+  geom_point(aes(shape = gene), size = 3) + 
+  geom_line(aes(linetype = gene)) + 
+  scale_color_brewer(palette = "Dark2") + 
+  scale_shape_manual(values = c(1, 3)) + 
+  scale_linetype_manual(values = geneLinetypes)
+
+```
+
+
+## Barplot  
+
+Say you decide to take your plot and switch to a different layer type, you can reuse a lot of what you have already done. For example lets switch from a dot/line plot to a bar plot by using `geom_bar()`. By default `geom_bar()` does plotting by counting up all values that fall into a group, but if you want a specific values instead you have to give `geom_bar()` `stat = "identity"` 
+
+
+
+
+```{r, fig.width=8, fig.height=8}
+ggplot(ts_longFormat_SOD2, aes(x = time, y = expression, color = exposure)) + 
+  geom_bar(stat = "identity") +
+  scale_color_brewer(palette = "Dark2")
+
+```
+
+Notice now that for `geom_bar()` color controls the border of the bars but if we want the bars themselves to be the given color we have to use `fill` instead. 
+```{r, fig.width=8, fig.height=8}
+ggplot(ts_longFormat_SOD2, aes(x = time, y = expression, fill = exposure)) + 
+  geom_bar(stat = "identity") +
+  scale_color_brewer(palette = "Dark2")
+```
+
+But we lost the colors we were trying to set and that's because we are using the `scale_color_brewer` but we are now using fill instead so we need the `scale_fill_brewer` function instead.  
+```{r, fig.width=8, fig.height=8}
+ggplot(ts_longFormat_SOD2, aes(x = time, y = expression, group = exposure, fill = exposure)) + 
+  geom_bar(stat = "identity") +
+  scale_fill_brewer(palette = "Dark2")
+```
+
+By default `geom_bar()` stacks all the bars belonging to the same x-axis grouping on top of each other but if we wanted them next to each other instead we give `geom_bar()` `position = "dodge"`. 
+```{r, fig.width=8, fig.height=8}
+ggplot(ts_longFormat_SOD2, aes(x = time, y = expression, group = exposure, fill = exposure)) + 
+  geom_bar(stat = "identity", position = "dodge") +
+  scale_fill_brewer(palette = "Dark2") 
+```
+
+We can make the bars stand out more by giving change the border color for all bars to be `black` 
+```{r, fig.width=8, fig.height=8}
+ggplot(ts_longFormat_SOD2, aes(x = time, y = expression, group = exposure, fill = exposure)) + 
+  geom_bar(stat = "identity", position = "dodge", color = "black") +
+  scale_fill_brewer(palette = "Dark2")
+```
+
+Now lets dress up the plot a little bit, we can do this by using ggplot2's `theme()` function which allows the tweaking of many different aspects of how the plot itself looks in general, let's change the legend position so it's on the bottom instead.  
+```{r, fig.width=8, fig.height=8}
+ggplot(ts_longFormat_SOD2, aes(x = time, y = expression, group = exposure, fill = exposure)) + 
+  geom_bar(stat = "identity", position = "dodge", color = "black") +
+  scale_fill_brewer(palette = "Dark2") + 
+  theme(legend.position = "bottom") 
+```
+
+To see all the things that `theme()` can do use the help function  
+```{r, fig.width=8, fig.height=8, eval = F}
+help(theme)
+```
+
+We can also take advantage of preset themes supplied by ggplot2  
+```{r, fig.width=8, fig.height=8}
+ggplot(ts_longFormat_SOD2, aes(x = time, y = expression, group = exposure, fill = exposure)) + 
+  geom_bar(stat = "identity", position = "dodge", color = "black") +
+  scale_fill_brewer(palette = "Dark2") + 
+  theme_bw() + 
+  theme(legend.position = "bottom")
+```
+
+We can also change the title and labels of axis with `labs()` function and lets get rid of the panel around the plot (`panel.border = element_blank()`). Also center the title (`plot.title = element_text(hjust = 0.5)`).    
+```{r, fig.width=8, fig.height=8}
+ggplot(ts_longFormat_SOD2, aes(x = time, y = expression, group = exposure, fill = exposure)) + 
+  geom_bar(stat = "identity", position = "dodge", color = "black") +
+  scale_fill_brewer(palette = "Dark2") + 
+  labs(title = "Expression of SOD2 gene", y = "Gene Expression", x = "Time (hrs)") + 
+  theme_bw() + 
+  theme(legend.position = "bottom", 
+        panel.border = element_blank(), 
+        plot.title = element_text(hjust = 0.5))
+
+```
+
+
+## Controlling plotting order using factors  
+Let's say we didn't change the time column into a numeric column. Notice how the order isn't what we would want, this is because R will determine the order automatically by sorting the input values. 
+```{r, fig.width=8, fig.height=8}
+
+ts_longFormat_SOD2 = read_tsv("datasets/time.series.data.txt") %>% 
+  rename(gene = ...1) %>% 
+  gather(Condition, expression, 2:ncol(.) ) %>% 
+  separate(Condition, c("exposure", "time") ) %>% 
+  filter("SOD2" == gene)
+
+ggplot(ts_longFormat_SOD2, aes(x = time, y = expression, group = exposure, fill = exposure)) + 
+  geom_bar(stat = "identity", position = "dodge", color = "black") +
+  scale_fill_brewer(palette = "Dark2") + 
+  labs(title = "Expression of SOD2 gene", y = "Gene Expression", x = "Time (hrs)") + 
+  theme_bw() + 
+  theme(legend.position = "bottom", 
+        panel.border = element_blank(), 
+        plot.title = element_text(hjust = 0.5))
+
+
+```
+
+This can be fixed by changing the time column into a factor from a character and set the order of levels 
+```{r, fig.width=8, fig.height=8}
+ts_longFormat_SOD2 = ts_longFormat_SOD2 %>% 
+  mutate(time = factor(time, levels = c("0h", "1h", "2h", "4h", "6h", "12h", "24h")))
+
+ggplot(ts_longFormat_SOD2, aes(x = time, y = expression, group = exposure, fill = exposure)) + 
+  geom_bar(stat = "identity", position = "dodge", color = "black") +
+  scale_fill_brewer(palette = "Dark2") + 
+  labs(title = "Expression of SOD2 gene", y = "Gene Expression", x = "Time (hrs)") + 
+  theme_bw() + 
+  theme(legend.position = "bottom", 
+        panel.border = element_blank(), 
+        plot.title = element_text(hjust = 0.5))
+
+
+```
+
+## Saving plots  
+Plots can be saved to a variety of image types but the most useful is likely pdf, this will allow you to be able to manipulate the plot in programs like Illustrator or Inkscape or save as any other image type after.  To save as pdf we will use the function `pdf()`. How this functions works is that it opens up a pdf graphic device which will catch all plot calls (rather than going to the plot window in RStudio) until the function `dev.off()` is called 
+```{r}
+pdf("example_plot.pdf", width = 11, height = 8.5, useDingbats = F)
+ggplot(ts_longFormat_SOD2, aes(x = time, y = expression, group = exposure, fill = exposure)) + 
+  geom_bar(stat = "identity", position = "dodge", color = "black") +
+  scale_fill_brewer(palette = "Dark2") + 
+  labs(title = "Expression of SOD2 gene", y = "Gene Expression", x = "Time (hrs)") + 
+  theme_bw() + 
+  theme(legend.position = "bottom", 
+        panel.border = element_blank(), 
+        plot.title = element_text(hjust = 0.5))
+dev.off()
+```
+
+*  **example_plot.pdf** - The first argument is the name of a file you want to save the plots to, this will erase any file with this name if it already exists so be careful.    
+*  **width** - This is the width of the plot in inches   
+*  **height** - This is the height of the plot in inches  
+*  **useDingbats=F** - This turns off the graphic library Dingbats, you always want to set this to FALSE, it causes R to create a larger file but if you don't turn off Dingbats it causes problems when editing the pdf latter in something like Illustrator.      
+
+### Multiple pages  
+R will keeping adding pages to the opened pdf until `dev.off()` is called.  
+
+```{r}
+pdf("example_plot_2_pages.pdf", width = 11, height = 8.5, useDingbats = F)
+ggplot(ts_longFormat_SOD2, aes(x = time, y = expression, group = exposure, fill = exposure)) + 
+  geom_bar(stat = "identity", position = "dodge", color = "black") +
+  scale_fill_brewer(palette = "Dark2") + 
+  labs(title = "Expression of SOD2 gene", y = "Gene Expression", x = "Time (hrs)") + 
+  theme_bw() + 
+  theme(legend.position = "bottom", 
+        panel.border = element_blank(), 
+        plot.title = element_text(hjust = 0.5))
+ggplot(ts_longFormat_SOD2_CD74, aes(x = time, y = expression, color = exposure, group = grouping)) + 
+  geom_point(aes(shape = gene), size = 3) + 
+  geom_line(aes(linetype = gene)) + 
+  scale_color_brewer(palette = "Dark2") + 
+  scale_shape_manual(values = c(1, 3)) + 
+  scale_linetype_manual(values = geneLinetypes)
+
+dev.off()
+```
+
+
+```{r, echo = F, eval = F}
+temps = readr::read_tsv("avg_temps_usa_wide.tab.txt")
+
+temps_gat = temps %>% 
+  gather(date, temperature, 6:ncol(temps)) %>% 
+  separate(date, c("year", "month"), convert = T)
+
+temps_gat_boston = temps_gat %>% 
+  filter(Station_Name == "BOSTON/LOGAN INT'L ARPT")
+
+ggplot(temps_gat, aes(x = month, y = temperature, group = year, color = factor(year) ) ) + 
+  geom_line()
+
+```
+
+## Excercises
+
+Using the Temperature data frame read in earlier  
+<a download = "avg_temps_usa_wide.tab.txt" href = "datasets/avg_temps_usa_wide.tab.txt">Average Temperatures USA</a>  
+
+1. Filter the long format data frame created in Part 1 to just one Station_name  
+2. Modify the month column into a factor so that the months are organized in chronological order. (hint use this vector `c("January","February","March","April","May","June","July","August","September","October","November","December"))`  
+3. Create a line and dot plot of temperature for the Station_name you picked in 1 with months on x-axis and temperatures on y-axis, color the lines by years (see what happens to the colors when you change years into a factor rather than a numeric data type)   
+4. Now create a barplot 
+5. Now filter the long format data frame again to be from 3 different stations and to just the year 1995. 
+6. Take the new data frame from 5 and create a barplot x = months and y = temperature and color the bars by station name (try setting the station names to new custom colors of your choosing, you can use http://colorbrewer2.org/ to pick colors)
+
+## Adding Text To Plots  
+
+## Line graph 
+
+Reading and processing data 
+```{r}
+library(tidyverse)
+#
+ts_longFormat = read_tsv("datasets/time.series.data.txt") %>% 
+  rename(gene = "...1") %>% 
+  gather(Condition, expression, 2:ncol(.) ) %>% 
+  separate(Condition, c("exposure", "time") )  %>% 
+  mutate(time = as.numeric(gsub("h", "", time) ) )
+
+# also you can also the %in% operator that R offers 
+ts_longFormat_SOD2_CD74 = ts_longFormat %>% 
+  filter(gene %in% c("SOD2", "CD74") )
+
+# create a grouping variable to make plotting easier 
+ts_longFormat_SOD2_CD74 = ts_longFormat_SOD2_CD74 %>% 
+  mutate(grouping = paste0(gene, "-", exposure))
+
+```
+
+Here is a plot from the last Session 
+```{r}
+# using group = grouping to separate out the different genes and the exposure but still color by exposure 
+geneLinetypes =c("dotted", "solid")
+names(geneLinetypes) = c("CD74", "SOD2")
+# make the points larger, the value given to size is a relative number  
+ggplot(ts_longFormat_SOD2_CD74, aes(x = time, y = expression, color = exposure, group = grouping)) + 
+  geom_point(aes(shape = gene), size = 3) + 
+  geom_line(aes(linetype = gene)) + 
+  scale_color_brewer(palette = "Dark2") + 
+  scale_shape_manual(values = c(1, 3)) + 
+  scale_linetype_manual(values = geneLinetypes)
+
+```
+
+Now imagine we want to add text to each line so we can have a label for what each line represents. This could be accomplished in several ways, one way is to first create a data frame with data points for each the max time point for each grouping variable. 
+
+```{r}
+
+ts_longFormat_SOD2_CD74_summary = ts_longFormat_SOD2_CD74 %>% 
+  filter("Ctrl" != exposure) %>% 
+  group_by(grouping) %>% 
+  mutate(maxTime = max(time)) %>% 
+  filter(time == maxTime)
+```
+
+Once we have this data frame, we can use it to add a label at the further time point, which will be at the end of each line. This can be done by utilizing the fact that when adding geom_[LAYER] layers we can assign a new data frame for the layer to base its layout off of by doing `data=`.     
+```{r}
+ggplot(ts_longFormat_SOD2_CD74, aes(x = time, y = expression, color = exposure, group = grouping)) + 
+  geom_point(aes(shape = gene), size = 3) + 
+  geom_line(aes(linetype = gene)) + 
+  scale_color_brewer(palette = "Dark2") + 
+  scale_shape_manual(values = c(1, 3)) + 
+  scale_linetype_manual(values = geneLinetypes) + 
+  geom_text(aes(label = grouping), data = ts_longFormat_SOD2_CD74_summary)
+```
+
+Here we used the geom_text layer which adds text, it needs a x and y (which was set in the top ggplot aes) and a label variable for what it's going to add as text to the plot. Notice how the text is centered on the last point, but we can't see it very well, so to change the text alignment we use `hjust=`, 0 = start at the x,y coordinates, 0.5 (default) = center on the x,y coordinates, and 1 = end at the x,y coordinates.    
+```{r}
+ggplot(ts_longFormat_SOD2_CD74, aes(x = time, y = expression, color = exposure, group = grouping)) + 
+  geom_point(aes(shape = gene), size = 3) + 
+  geom_line(aes(linetype = gene)) + 
+  scale_color_brewer(palette = "Dark2") + 
+  scale_shape_manual(values = c(1, 3)) + 
+  scale_linetype_manual(values = geneLinetypes) + 
+  geom_text(aes(label = grouping), hjust = 0, data = ts_longFormat_SOD2_CD74_summary)
+
+```
+
+So now the text starts at the point but it's still over the point so lets nudge it a little bit to the right by use `nudge_x=` to nudge it over 1 x-axis unit
+```{r}
+ggplot(ts_longFormat_SOD2_CD74, aes(x = time, y = expression, color = exposure, group = grouping)) + 
+  geom_point(aes(shape = gene), size = 3) + 
+  geom_line(aes(linetype = gene)) + 
+  scale_color_brewer(palette = "Dark2") + 
+  scale_shape_manual(values = c(1, 3)) + 
+  scale_linetype_manual(values = geneLinetypes) + 
+  geom_text(aes(label = grouping), nudge_x = 1, hjust = 0, data = ts_longFormat_SOD2_CD74_summary)
+```
+
+Though unfortunately ggplot doesn't take into account the text when determining limits so we have to change them to be able to see the text  
+```{r}
+ts_longFormat_SOD2_CD74_plot = ggplot(ts_longFormat_SOD2_CD74, aes(x = time, y = expression, color = exposure, group = grouping)) + 
+  geom_point(aes(shape = gene), size = 3) + 
+  geom_line(aes(linetype = gene)) + 
+  scale_color_brewer(palette = "Dark2") + 
+  scale_shape_manual(values = c(1, 3)) + 
+  scale_linetype_manual(values = geneLinetypes) + 
+  geom_text(aes(label = grouping), nudge_x = 1, hjust = 0, data = ts_longFormat_SOD2_CD74_summary) + 
+  xlim(0, 30)
+
+print(ts_longFormat_SOD2_CD74_plot)
+```
+
+```{r}
+#| column: screen-inset
+# library(plotly)
+# ggplotly(ts_longFormat_SOD2_CD74_plot)
+```
+
+
+## Bar graph
+
+Now let's try adding text to a barplot, lets define the time points as factors so we don't have to have so much space between each bar  
+```{r}
+ts_longFormat_SOD2_CD74 = read_tsv("datasets/time.series.data.txt") %>% 
+  rename(gene = "...1") %>% 
+  gather(Condition, expression, 2:ncol(.) ) %>% 
+  separate(Condition, c("exposure", "time") ) %>% 
+  filter(gene %in% c("SOD2", "CD74") )%>% 
+  mutate(time = factor(time, levels = c("0h", "1h", "2h", "4h", "6h", "12h", "24h")))
+
+ggplot(ts_longFormat_SOD2_CD74, aes(x = time, y = expression, fill = gene)) + 
+  geom_bar(stat = "identity", position = "dodge") + 
+  scale_fill_brewer(palette = "Dark2")
+```
+
+```{r}
+ggplot(ts_longFormat_SOD2_CD74, aes(x = time, y = expression, fill = gene)) + 
+  geom_bar(stat = "identity", position = "dodge") + 
+  scale_fill_brewer(palette = "Dark2") + 
+  geom_text(aes(label = expression))
+```
+
+These numbers are quite large so let's change it so they only show 3 significant figures using `signif()` function    
+```{r}
+ggplot(ts_longFormat_SOD2_CD74, aes(x = time, y = expression, fill = gene)) + 
+  geom_bar(stat = "identity", position = "dodge") + 
+  scale_fill_brewer(palette = "Dark2") + 
+  geom_text(aes(label = signif(expression, 3)))
+```
+
+Also look how the numbers are over the place, what's happening? Well, we still haven't taken into account the different exposures. We could handle this in a couple of ways but let's take advantage of the `face_wrap` function in ggplot. By using the ~ symbol we tell face_wrap what columns to use to create separate panels. 
+```{r}
+ggplot(ts_longFormat_SOD2_CD74, aes(x = time, y = expression, fill = gene)) + 
+  geom_bar(stat = "identity", position = "dodge") + 
+  scale_fill_brewer(palette = "Dark2") + 
+  geom_text(aes(label = signif(expression, 3))) + 
+  facet_wrap(~exposure)
+```
+
+Notice how the limits for each axis is the same across all panels, we can change this by setting the `scales=` to free (different limits for each panel), free_x(different for just x), or free_y (different for just y) 
+```{r}
+ggplot(ts_longFormat_SOD2_CD74, aes(x = time, y = expression, fill = gene)) + 
+  geom_bar(stat = "identity", position = "dodge") + 
+  scale_fill_brewer(palette = "Dark2") + 
+  geom_text(aes(label = signif(expression, 3)), position = "dodge") + 
+  facet_wrap(~exposure, scales = "free_x")
+
+```
+
+Because the barplot is dodged, we have to doge the geom_text as well, each that is done with the position_dodge function rather than just `"dodge"`.  
+```{r}
+ggplot(ts_longFormat_SOD2_CD74, aes(x = time, y = expression, fill = gene, group = gene)) + 
+  geom_bar(stat = "identity", position = "dodge") + 
+  scale_fill_brewer(palette = "Dark2") + 
+  geom_text(aes(label = signif(expression, 3)), position = position_dodge(width = 0.9) ) + 
+  facet_wrap(~exposure, scales = "free_x")
+
+```
+
+Also let's raise the labels a bit above the bars by adding 1000 to the y 
+```{r}
+ggplot(ts_longFormat_SOD2_CD74, aes(x = time, y = expression, fill = gene)) + 
+  geom_bar(stat = "identity", position = "dodge") + 
+  scale_fill_brewer(palette = "Dark2") + 
+  geom_text(aes(y = expression + 1000,  label = signif(expression, 3)), position = position_dodge(width = 0.9) ) + 
+  facet_wrap(~exposure, scales = "free_x")
+```
+
+Also let's angle the text by setting `angle = 45` to put the text at a slant to fit a bit better 
+```{r}
+ggplot(ts_longFormat_SOD2_CD74, aes(x = time, y = expression, fill = gene)) + 
+  geom_bar(stat = "identity", position = "dodge") + 
+  scale_fill_brewer(palette = "Dark2") + 
+  geom_text(aes(y = expression + 1000,  label = signif(expression, 3)), angle = 45, position = position_dodge(width = 0.9) ) + 
+  facet_wrap(~exposure, scales = "free_x")
+```
+
+We can also give a bit more room with putting the label on the bottom.  
+```{r}
+ts_longFormat_SOD2_CD74_plot = ggplot(ts_longFormat_SOD2_CD74, aes(x = time, y = expression, fill = gene)) + 
+  geom_bar(stat = "identity", position = "dodge") + 
+  scale_fill_brewer(palette = "Dark2") + 
+  geom_text(aes(y = expression + 1000,  label = signif(expression, 3)), angle = 45, position = position_dodge(width = 0.9) ) + 
+  facet_wrap(~exposure, scales = "free_x") + 
+  theme(legend.position = "bottom")
+print(ts_longFormat_SOD2_CD74_plot)
+```
+
+```{r}
+#| column: screen-inset
+
+# library(plotly)
+# ggplotly(ts_longFormat_SOD2_CD74_plot)
+```
+
+
+
+
+### Another Example  
+Here is an example of adding text to a bar graph to indicate how big each group is when plotting relative proportions 
+
+```{r}
+maln_protein_to_matrix_mat_pca_dat_samplesMeta = readr::read_tsv("datasets/maln_protein_to_matrix_mat_pca_dat_samplesMeta.tab.txt")
+maln_protein_to_matrix_mat_pca_dat_samplesMeta
+
+maln_protein_to_matrix_mat_pca_dat_samplesMeta_sum = maln_protein_to_matrix_mat_pca_dat_samplesMeta %>% 
+    group_by(hdbcluster, collection_year) %>% 
+    summarise(n = n()) %>% 
+    group_by(hdbcluster) %>% 
+    mutate(clusterTotal = sum(n)) %>% 
+    mutate(clusterFrac = n/clusterTotal) %>% 
+    group_by(collection_year) %>% 
+    mutate(yearTotal = sum(n)) %>% 
+    mutate(yearFrac = n/yearTotal)
+  
+maln_protein_to_matrix_mat_pca_dat_samplesMeta_sum_filt = maln_protein_to_matrix_mat_pca_dat_samplesMeta_sum %>% 
+   group_by() %>% 
+   filter("NA" != collection_year) %>% 
+   mutate(collection_year = as.integer(collection_year)) %>% 
+   filter(yearTotal >10)
+
+maln_protein_to_matrix_mat_pca_dat_samplesMeta_sum_filt_yearTotals = maln_protein_to_matrix_mat_pca_dat_samplesMeta_sum_filt %>% 
+                filter() %>% 
+                select(collection_year, yearTotal) %>% 
+                unique()
+
+maln_protein_to_matrix_mat_pca_dat_samplesMeta_sum_filt_yearTotals
+clusterColors = c("black", "#005AC8", "#AA0A3C", "#0AB45A", "#8214A0", "#FA7850", "#006E82", "#FA78FA", "black", "#005AC8", "#AA0A3C", "#0AB45A", "#8214A0", "#FA7850", "#005AC8", "#AA0A3C", "#0AB45A", "#8214A0", "#FA7850","#14D2DC")
+names(clusterColors) = c("0", "1", "2", "3", "4", "5", "6", "7", "Lab", "central_africa", "e_africa", "se_asia", "w_africa", "south_america","Central Africa", "East Africa", "South East Asia", "West Africa", "South America", "India")
+
+ggplot(maln_protein_to_matrix_mat_pca_dat_samplesMeta_sum_filt %>% 
+         filter(), aes(x = collection_year, y = yearFrac, fill = as.factor(hdbcluster) ) ) + 
+    geom_bar(stat = "identity", color = "black") + 
+    scale_fill_manual("Cluster",values = clusterColors[names(clusterColors) %in% maln_protein_to_matrix_mat_pca_dat_samplesMeta_sum_filt$hdbcluster]) +
+    scale_x_continuous(breaks = seq(min(maln_protein_to_matrix_mat_pca_dat_samplesMeta_sum_filt$collection_year), max(maln_protein_to_matrix_mat_pca_dat_samplesMeta_sum_filt$collection_year))) +
+    theme_bw() + ggtitle("") + 
+    theme(axis.text.x = element_text(family = "Helvetica",face="plain", colour="#000000", angle = 90, hjust = 1),
+          axis.title = element_text(family = "Helvetica", face="bold",  colour="#000000"),
+          plot.title = element_text(family = "Helvetica", face="bold",  colour="#000000", hjust = 0.5), 
+          panel.border = element_blank(),            
+          panel.grid.major.x = element_blank(),            
+          axis.ticks.x = element_blank()) +
+    geom_text(data = maln_protein_to_matrix_mat_pca_dat_samplesMeta_sum_filt_yearTotals, 
+              aes(x = collection_year, y = 1.07, label = paste0("n=", yearTotal), angle = 45) ,
+              inherit.aes = F) + 
+  labs(x = "Collection Year", y = "Relative Proportions")
+
+```
+
+## Dividing Data into Quantiles  
+Some times it might be helpful to split data into different bins by creating evenly sized quantiles. This can be done by using the `ntile()` function. Here we are creating quantiles based off of the sd of the Lps exposure, to bin genes by how variable their expression is during the Lps time points.     
+```{r}
+
+ts_longFormat_lps_sum = ts_longFormat %>% 
+  filter(exposure == "Lps") %>% 
+  group_by(gene) %>% 
+  summarise(lps_sd = sd(expression))
+ts_longFormat_lps_sum
+
+
+ntiles = 2000
+ts_longFormat_lps_sum = ts_longFormat_lps_sum %>% 
+  mutate(lps_sd_quantile = ntile(lps_sd, ntiles))
+
+```
+
+We can add this quantile information back to the original data set by using the `left_join()` function, which takes a data frame and takes another data frame with which it shares columns, by matching information in the shared columns left_join adds what ever columns the first data frame doesn't have and populates these columns by matching up the data in the shared columns.  
+```{r}
+
+ts_longFormat = ts_longFormat %>% 
+  left_join(ts_longFormat_lps_sum)
+ts_longFormat
+
+```
+
+Let's take the 2000th quantile 
+```{r}
+top_ts_longFormat = ts_longFormat %>% 
+  filter(lps_sd_quantile == 2000)
+
+bottom_ts_longFormat = ts_longFormat %>% 
+  filter(lps_sd_quantile == 1)
+
+```
+
+And plot all the genes by using facet_wrap to seperate out the genes and allow their y axis to be different between panels.  
+```{r}
+ggplot(top_ts_longFormat, aes(x = time, y = expression, color = exposure)) + 
+  geom_point() + 
+  geom_line() + 
+  scale_color_brewer(palette = "Dark2") + 
+  facet_wrap(~gene, scales = "free_y")
+
+
+```
+
+The facet_wrap function also allows you set how many columns to have by using the `ncol=` arguments.  
+```{r}
+ggplot(top_ts_longFormat, aes(x = time, y = expression, color = exposure)) + 
+  geom_point() + 
+  geom_line() + 
+  scale_color_brewer(palette = "Dark2") + 
+  facet_wrap(~gene, scales = "free_y", ncol = 3)
+
+```
+
+facet_grid is another faceting function that sets out things in a grid pattern which is better for showing relationships, the face_wrap just create a panel for each level and puts these panels in the order that the levels go but facet_grid will layout the panels in a grid.   
+```{r}
+ggplot(top_ts_longFormat, aes(x = gene, y = expression, fill = gene)) + 
+  geom_bar(stat = "identity", color = "black") + 
+  scale_fill_brewer(palette = "Paired") + 
+  facet_grid(time~exposure) +
+   theme(axis.text.x = element_text(angle = -45, hjust = 0)) + 
+  theme_bw()
+
+```
+
+Also the library [cowplot](https://cran.r-project.org/web/packages/cowplot/vignettes/introduction.html) is a great library for setting up completely different plots in custum sized panels like in a figure.  
+
+##  Excerices 
+Using the Temperature data frame from last sessions  
+<a download = "avg_temps_usa_wide.tab.txt" href = "datasets/avg_temps_usa_wide.tab.txt">Average Temperatures USA</a>  
+
+1.  Create a bar plot of temperatures for 1995 for Boston and put the temperatures on top of the bars, x-axis = month, y-axis = temperature  
+2.  Create a line graph for all years in Boston and put the name of the year next to the line after December , x-axis = month, y-axis = temperature  
+3.  Create a bar plot for all years in Boston but facet the plot so each year has its own panel , x-axis = month, y-axis = temperature  
+4.  Create quantiles with 100 bins for mean temperatures over all years for each Station, and take the 100th bin and create a bar graph, with x-axis Station_Name, y-axis temperate, and using face_grid plot month by year   
+
+
+
+

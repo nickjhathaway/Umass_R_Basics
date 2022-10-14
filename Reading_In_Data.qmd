@@ -1,0 +1,110 @@
+---
+title: Reading in Data 
+--- 
+
+Data files can come in multiple formats but some of the most common types are plain text files that have each column delimited by either tabs `"\t"` or commas `","`. R can also read in files that saved in excel format among many many others.   
+
+## File Formats
+
+### Plain Text Files
+For reading in plain text files we will being using the package `readr`
+```{r}
+library(readr)
+```
+
+For reading in tab delimited files we have `read_tsv()` and for comma delimited files we have `read_csv()`
+Here is a [link](../datasets/WorEpi.tab.txt) to a tab delimited file
+Also a helpful function might be to use `file.choose()` 
+```{r}
+library(readr)
+worEpi = read_tsv("datasets/WorEpi.tab.txt")
+
+library(dplyr) # to use glimpse(), an improved version of str()
+glimpse(worEpi)
+```
+or 
+```{r, eval=FALSE}
+library(readr)
+library(dplyr)
+worEpi = read_tsv(file.choose())
+glimpse(worEpi)
+head(worEpi)
+```
+Here is a [link](datasets/Mel.csv) to a comma separated file 
+```{r}
+library(readr)
+melanoma = read_csv("datasets/Mel.csv")
+glimpse(melanoma)
+head(melanoma)
+```
+or 
+```{r, eval=FALSE}
+library(readr)
+melanoma = read_csv(file.choose())
+glimpse(melanoma)
+
+```
+
+## Rownames  
+Sometimes your data will have row names as well, which the functions of readr will read in and put as the first column without a name and when using the readr functions it will be named "...1"     
+
+```{r}
+temps = read_tsv("datasets/Temperatures.txt")
+print(temps)
+```
+
+
+
+### Excel Sheets
+For excel sheets we have the library `readxl`
+```{r, eval=T}
+library(readxl)
+```
+
+Here is a [link](datasets/Both.xlsx) to an excel sheet of both previous files as separate sheets
+```{r}
+library(readxl)
+melanoma = read_excel("datasets/Both.xlsx")
+glimpse(melanoma)
+head(melanoma)
+```
+By default it just reads the first sheet, you can tell it which sheet to read
+```{r}
+library(readxl)
+worEpi = read_excel("datasets/Both.xlsx", sheet = 2)
+glimpse(worEpi)
+head(worEpi)
+```
+
+And to list all sheets available for reading 
+```{r}
+library(readxl)
+sheets = excel_sheets("datasets/Both.xlsx")
+print(sheets)
+```
+
+You can also read in by giving the sheet's name, to get what the sheets names are you can use 
+```{r}
+library(readxl)
+print(excel_sheets("datasets/Both.xlsx"))
+
+worEpi = read_excel("datasets/Both.xlsx", sheet = "Sheet2")
+head(worEpi)
+
+melanoma = read_excel("datasets/Both.xlsx", sheet = "Mel")
+head(melanoma)
+
+```
+
+
+### SAS and SPSS
+For reading data from SAS of SPSS files we have the library `haven`.  I don't have any example datasets but the functions are below
+
+```{r, eval=FALSE}
+library(haven)
+read_sas()
+read_spss()
+read_stata()
+```
+       
+

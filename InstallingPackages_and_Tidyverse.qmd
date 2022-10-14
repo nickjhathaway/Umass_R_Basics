@@ -1,0 +1,112 @@
+---
+title: Installing  Libraries
+---
+
+The majority of the time to do analysis within in R you are going to install additional packages to add to the base functionality of R itself.  
+
+## install.packages()  
+
+To install new libraries you can use the `install.packages()` function and give it the name of a library that [The Comprehensive R Archive Network](https://cran.r-project.org/)(CRAN) has stored in their repositories. Below are the commands for installing several usage packages   
+
+```{r, eval=FALSE}
+#For reading data in
+install.packages(c("readr","readxl", "haven"))
+
+#For organizing Data
+install.packages(c("dplyr", "tidyr"))
+
+#tidyverse (includes lots of the packages above )
+install.packages(c("tidyverse"))
+
+#For plotting
+install.packages(c("ggplot2", "ggrepel", "ggiraph", "ggfortify", "ggridges", "ggthemes", "ggdist", "gghalves","ggpmisc", "ggforce", "gghighlight", "ggnewscale"
+                   "plotly", "RColorBrewer","hexbin", "heatmaply"))
+
+#For Downloading more packages not managed by R in install.packages()
+install.packages(c("devtools"))
+
+#for models 
+install.packages(c("tidymodels", "dotwhisker", "broom.mixed", "rstanarm"))
+```
+
+Once you have installed a library, you can load it's functions by using the `library()` function
+```{r, eval=FALSE}
+library(ggplot2)
+help(ggplot)
+```
+
+## update.packages()
+
+Of course new updates happen to packages all the time and you may need to update them, to do so we use the `update.packages()`, usually I set the ask= argument to `FALSE` because otherwise you are stuck click yes through every package you have  
+```{r, eval =  FALSE}
+update.packages(ask = FALSE)
+```
+
+## Check what libraries are loaded and what your system has   
+
+```{r}
+packagesLoaded = .packages()
+print(packagesLoaded)
+```
+
+```{r}
+library(ggplot2)
+library(readr)
+library(dplyr)
+packagesLoaded = .packages()
+print(packagesLoaded)
+```
+
+
+For reproducibility it's good to be able to list the current versions and the computer hardware you used to run your analysis. To do that we utilize the following commands  
+
+```{r}
+sessioninfo::platform_info()
+```
+
+Printing info on packages used and getting their versions 
+
+
+```{r}
+sessioninfo::package_info() |> filter(package %in% packagesLoaded)
+```
+
+## Tidyverse  
+
+![](images/tidyverse.png)
+
+At the beginning there where scatter packages that were commonly used but stood separate but then came forward the tidyverse to contain them all!  But seriously, tidyverse has combined together multiple extremely helpful packages used everyday in data science into one convient package (that really just installs all the packages needed). 
+
+<https://www.tidyverse.org/>
+
+As stated on their website
+
+>
+> R packages for data science
+> The tidyverse is an opinionated collection of R packages designed for data science. All packages share an underlying design philosophy, grammar, and data structures.
+> 
+
+Install the complete tidyverse with:
+```{r, eval=F}
+install.packages("tidyverse")
+```
+
+To utilize their resources on how to learn to enter and use the tidyverse to analyze data please visit 
+
+<https://www.tidyverse.org/learn/>
+
+Which includes but is not limited to: 
+
+The book written by the same people who manage the tidyverse the man himself [Hadley Wickham](https://hadley.nz/)  
+
+![](images/r4ds.png)
+<https://r4ds.had.co.nz/> 
+Highly recommend, also covers how to organize data analysis pipelines.  
+
+
+<https://moderndive.com/> 
+
+
+
+
+

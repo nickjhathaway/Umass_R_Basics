@@ -1,0 +1,60 @@
+--- 
+title: "R via RStudio"
+---
+
+## R 
+
+You can visit the R official webpages for more info  
+
+<https://www.r-project.org/>  
+<https://cran.r-project.org/>  
+
+As stated on their webpage   
+
+>
+>R is a language and environment for statistical computing and graphics. It is a GNU project which is similar to the S language and environment which was developed at Bell Laboratories (formerly AT&T, now Lucent Technologies) by John Chambers and colleagues. R can be considered as a different implementation of S. There are some important differences, but much code written for S runs unaltered under R.
+>
+
+>
+>R provides a wide variety of statistical (linear and nonlinear modelling, classical statistical tests, time-series analysis, classification, clustering, …) and graphical techniques, and is highly extensible. The S language is often the vehicle of choice for research in statistical methodology, and R provides an Open Source route to participation in that activity.
+>
+
+>
+>One of R’s strengths is the ease with which well-designed publication-quality plots can be produced, including mathematical symbols and formulae where needed. Great care has been taken over the defaults for the minor design choices in graphics, but the user retains full control.
+>
+
+>
+>R is available as Free Software under the terms of the Free Software Foundation’s GNU General Public License in source code form. It compiles and runs on a wide variety of UNIX platforms and similar systems (including FreeBSD and Linux), Windows and MacOS.
+>
+
+R is the underlying program that is a collection of tools and packages to analyze data. RStudio is a program that makes interacting with R and writing code for R a lot easier. The analogy that is commonly used is R is the engine and RStudio is the car and dashboard that interacts and harness that engine. 
+
+[RStudio](https://www.rstudio.com/) has been increasing it's user base and the number of programs it supports (python, javascript, c++ etc). And they are currently rebranding into [Posit](https://posit.co/)
+
+
+## Installing R and RStudio
+
+
+1. Download and install R: http://cran.r-project.org  
+Choose the installer for your operating system.  
+![](images/Installing_R.png)  
+2. Download and install RStudio: http://www.rstudio.com/products/rstudio/download/  
+Scroll down the page until you see Installers for Supported Platforms  
+
+![](images/Installing_RStudio.png)  
+3. Open RStudio (you might only see 3 windows instead of 4)   
+![](images/rStudioExample.png)   
+
+To see the scripting window, which scripting will be gone over later, you need to hit the little plus sign to open a new file and choose R Script. Then you can write code to save for latter and reuse. 
+
+## Scripting  
+As is the purview of the scientific community reproducibility is always paramount and can also make your life easier. To script is to write out all the commands that you will perform on a set of analysis, the basic steps are usually
+
+*  Read in data  
+*  Pre-Process and quality control data  
+*  Analysis data  
+*  Create outputs including tables and plots  
+
+The script will contain all necessary commands to do the above though often with complex analyses you may have multiple scripts for a whole project, the advantage of this though is it can be seen exactly what you performed on the data and this can be re-run again if you need to change the input data in anyway. 
+
+

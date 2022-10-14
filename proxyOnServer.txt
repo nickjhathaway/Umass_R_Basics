@@ -1,0 +1,5 @@
+
+
+ProxyPass /R_Umass_Basics http://127.0.0.1:9990/R_Umass_Basics
+ProxyPassReverse /R_Umass_Basics  http://127.0.0.1:9990/R_Umass_Basics
+

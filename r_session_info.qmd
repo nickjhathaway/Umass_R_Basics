@@ -1,0 +1,28 @@
+--- 
+bibliography: [packages.bib]
+nocite: |
+  @*
+---
+
+```{r setup, echo=F, message=F, warning=F}
+suppressWarnings(suppressMessages(source("common.R")))
+```
+
+# R Session Info {.unnumbered}
+
+## R Version{-} 
+
+```{r, echo = F}
+sessioninfo::platform_info()
+```
+
+## Package Versions{-}
+
+The following packages were used in the analysis of the data  
+
+```{r, echo = F}
+sessioninfo::package_info(pkgs = packagesUsed) %>% filter(package %in% packagesUsed)
+
+```
+
+

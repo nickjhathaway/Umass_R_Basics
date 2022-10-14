@@ -1,0 +1,11 @@
+---
+bibliography: [references.bib, packages.bib]
+nocite: | 
+  @*
+---
+
+# References {.unnumbered}
+
+::: {#refs}
+
+:::

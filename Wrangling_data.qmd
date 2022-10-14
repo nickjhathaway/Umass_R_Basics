@@ -1,0 +1,295 @@
+---
+title: "Wrangling Data"
+---
+
+<!-- <script src="https://code.jquery.com/jquery-2.2.2.min.js"></script> -->
+<!-- <!--Include script for hiding output chunks--> -->
+<!-- <script> -->
+<!-- $(document).ready(function() { -->
+<!-- 	// console.log("hello") -->
+<!--   // Select all <pre> tags that do not have class 'r' -->
+<!--   $output = $(".toggleOutput"); -->
+<!--   // console.log($output) -->
+<!--   // Add the show/hide-button to each output chunk -->
+<!--   $output.prepend("<button style=\"float:right\" class=\"btn btn-primary showopt\">Show Output</button><br/>"); -->
+<!--   // Select the <pre> tags, then choose their <code> child tags and toggle visibility  -->
+<!--   $output.children("code").css({display: "none"}); -->
+
+<!--   // When the show/hide-button is clicked, toggle the current state and -->
+<!--   // change the button text -->
+<!--   $(".showopt").click(function() { -->
+<!--     $btn = $(this); -->
+<!--     $chunk = $(this).parent().children("code"); -->
+<!--     if($btn.html() === "Show Output") { -->
+<!--       $btn.html("Hide Output"); -->
+<!--     } else { -->
+<!--       $btn.html("Show Output"); -->
+<!--     } -->
+<!--     $btn.toggleClass("btn-info btn-primary"); -->
+<!--     $chunk.slideToggle("fast", "swing"); -->
+<!--   }); -->
+<!-- }); -->
+
+<!-- </script> -->
+
+
+
+
+
+```{r setup, echo=FALSE, message=FALSE}
+require(knitr)
+#turn off mesages and warnings and make it so output isn't prefixed by anything,
+#default is to put "##" in front of all output for some reason
+#also set tidy to true so code is wrapped properly 
+opts_chunk$set(message=FALSE, warning=FALSE, comment = "")
+options(width = 60)
+
+knitr::knit_hooks$set(output = function(x, options) {
+  return(paste0(
+    "```{",
+    ifelse(is.null(options$class),
+      "", 
+      paste0(" .", gsub(" ", " .", options$class))
+    ),
+    "}\n",
+    x,
+    "\n```"
+  ))
+})
+```
+
+## Manipulating Data frames and matrices  
+The **readr** package reads in data as what is called a **tibble** which is different from the default R data.frame and is the primary data container used by the **tidyverse**. The **tibble** class was invented to be more efficient and more user friendly than the data.frame but one major difference that trips up most people use to data.frame is that the **tibble** class doesn't allow rownames. While this doesn't make a big difference for most uses of the data.frame class there are instances when you need rownames for the matrix class. Below is how you would read in data that has rownames and then convert to a matrix and add the rownames. 
+
+```{r eval = T}
+library(tidyverse)
+
+ts = read_tsv("datasets/time.series.data.txt")
+ts_mat = as.matrix(ts[, 2:ncol(ts)])
+rownames(ts_mat) = ts$X1
+
+```
+
+## Converting to long vs wide formats 
+### Tidyr
+The `tidyr` package is about making your data.frames "tidy". Now what is meant by "tidy"? There are considered two ways to organize data tables. One is referred as "wide" format where each cell is a different observation and you have row and column names to explain what those observations are. The other format is called "long" format and this format is that every column is a different variable and each row is a different observation and this "long" format is the format that R is the best at for organizing. `tidyr` is all about switching between the two formats. 
+
+
+![](image_workzone/long_vs_wide_format/long_vs_wide_format.001.jpeg)
+
+
+#### gather
+`gather()` will take a table in **wide** format and change it into **long** format. It takes four important arguments, 1) the data.frame to work on, 2) the name of a new column that contain the old column names, 3) the name of new column to contain the observation that were spread out in the column table, 4) the column indexes to "gather" together.
+
+```{r}
+ts = read_tsv("datasets/time.series.data.txt")
+#rename first column 
+colnames(ts)[1] = "gene"
+# or the rename function can also be used 
+ts = read_tsv("datasets/time.series.data.txt")
+ts = rename(ts, gene = `...1`)
+
+ts
+
+ts_gat = gather(ts, Condition, expression, 2:ncol(ts) )  
+ts_gat
+
+```  
+
+![](image_workzone/gather/gather.001.jpeg)
+
+![](image_workzone/gather_2/gather_2.001.jpeg)
+
+#### spread  
+The opposite of the **gather()** function is the **spread()** function which can be used to undo the **gather()**  
+```{r}
+ts_gat_sp = spread(ts_gat, Condition, expression)  
+ts_gat_sp
+```
+
+
+
+
+#### separate 
+**tidyr** also has functions for manipulating columns into multiple columns, the **separate** function  
+
+```{r}
+ts_gat = separate(ts_gat, Condition, c("exposure", "time") )  
+ts_gat
+```
+
+#### unite  
+The opposite of the **separate** function is the the **unite** function  
+```{r}
+ts_gat = unite(ts_gat, Condition,  exposure, time)  
+ts_gat
+
+```
+
+```{r, echo = F}
+ts_gat = separate(ts_gat, Condition, c("exposure", "time") )  
+```
+
+## Manipulating data in table  
+The library **dplyr** can be used to manipulate the data within the table themselves while **tidyr** is more for reorganization  
+### Mutating Columns types   
+The **mutate** function can be used to either create new columns or change current columns. Here I also take advantage of the **gsub** function, which takes three arguments, 1) a pattern to replace, 2) what to replace the pattern with, 3) what to do the replacement on   
+```{r}
+library(dplyr)
+ts_gat = mutate(ts_gat, time = as.numeric(gsub("h", "", time) ) )  
+```
+
+## Piping  
+It is common practice with **tidyverse** functions to use something called **piping** which is using the results of function call and using that as input to the next function without saving that result in an intermediate variable, this allows for much more efficient processing of the data as not as much memory is used by the computer. This **piping** is accomplished by the **%>%** operator, which a keyboard shortcut is hitting the command+shift+m keys together (control+shirt+m for windows or ubuntu). The pipe operator takes what is given to it and places that as the first argument in the next function (e.g. mean(x) == x %>% mean() ) Below is a diagram.  
+
+```{r}
+x = 1:10
+
+mean(x)
+
+x %>% mean()
+
+```
+
+
+```{r}
+library(tidyverse) #this will load readr, dplyr, and tidyr
+ts_longFormat = read_tsv("datasets/time.series.data.txt") 
+ts_longFormat = rename(ts_longFormat, gene = ...1)
+ts_longFormat = gather(ts_longFormat, Condition, expression, 2:ncol(ts_longFormat) )
+ts_longFormat = separate(ts_longFormat, Condition, c("exposure", "time") ) 
+ts_longFormat = mutate(ts_longFormat, time = as.numeric(gsub("h", "", time) ) )
+ts_longFormat
+
+```
+
+Is equivalent to 
+
+```{r}
+library(tidyverse) #this will load readr, dplyr, and tidyr
+ts_longFormat = read_tsv("datasets/time.series.data.txt") %>% 
+  rename(gene = ...1) %>% 
+  gather(Condition, expression, 2:ncol(.) ) %>% 
+  separate(Condition, c("exposure", "time") )  %>% 
+  mutate(time = as.numeric(gsub("h", "", time) ) )
+ts_longFormat
+
+```
+
+![](image_workzone/piping_2/piping_2.001.jpeg)
+
+Below shows the relationship between the above pipe commands and the commands executed one by one 
+
+## Summarizing data  
+**dplyr** also offers ways to quickly group and then summarize your data using the **group_by** and **summarize** functions.  
+
+```{r}
+ts_longFormat_exposure_summary = ts_longFormat %>% 
+  group_by(exposure) %>% 
+  summarise(mean_expression =   mean(expression), 
+            median_expression = median(expression),
+            max_expression =    max(expression), 
+            min_expression =    min(expression), 
+            sd_expression =     sd(expression))
+
+ts_longFormat_exposure_summary
+
+```
+
+```{r}
+ts_longFormat_exposure_time_summary = ts_longFormat %>% 
+  group_by(exposure, time) %>% 
+  summarise(mean_expression = mean(expression), 
+            median_expression = median(expression),
+            max_expression = max(expression), 
+            min_expression = min(expression), 
+            sd_expression = sd(expression))
+
+ts_longFormat_exposure_time_summary
+
+```
+
+## Filtering data  
+
+```{r}
+ts_longFormat_crt = ts_longFormat %>% 
+  filter(exposure == "Ctrl")
+ts_longFormat_crt
+
+```
+
+
+### NAs in values 
+Taking means, mins, maxes, etc. can be affected if NA values are present 
+
+```{r}
+vals = c(10,3, 5, 9, 19, 23)
+
+mean(vals)
+min(vals)
+max(vals)
+
+vals = c(10,3, 5, 9, 19, 23, NA)
+
+mean(vals)
+min(vals)
+max(vals)
+
+```
+You can handle this by setting `na.rm = T`
+```{r}
+vals = c(10,3, 5, 9, 19, 23, NA)
+
+mean(vals, na.rm = T)
+min(vals, na.rm = T)
+max(vals, na.rm = T)
+
+```
+
+You can also just get rid of the NA values as well and if within in a data.frame you can use `filter()` you can do. 
+
+```{r}
+# use na.rm =T
+ts_longFormat_exposure_time_summary = ts_longFormat %>% 
+  group_by(exposure, time) %>% 
+  summarise(mean_expression = mean(expression, na.rm =T), 
+            median_expression = median(expression, na.rm =T),
+            max_expression = max(expression, na.rm =T), 
+            min_expression = min(expression, na.rm =T), 
+            sd_expression = sd(expression, na.rm =T))
+
+
+# use filter to keep only values of expression that aren't (!) NA (is.na)
+ts_longFormat_exposure_time_summary = ts_longFormat %>% 
+  filter(!is.na(expression)) %>% 
+  group_by(exposure, time) %>% 
+  summarise(mean_expression = mean(expression), 
+            median_expression = median(expression),
+            max_expression = max(expression), 
+            min_expression = min(expression), 
+            sd_expression = sd(expression))
+
+
+```
+
+
+
+
+dplyr offers a large array of available functions for manipulating data frames. Here is a list of resources for more options:  
+
+1.  cheatsheet - https://raw.githubusercontent.com/rstudio/cheatsheets/master/data-transformation.pdf  
+2.  a few basics tutorial - http://seananderson.ca/2014/09/13/dplyr-intro/  
+3.  a webinar - https://www.rstudio.com/resources/webinars/data-wrangling-with-r-and-rstudio/  
+
+## Excercises
+
+Download Average Temperatures USA  
+<a download = "avg_temps_usa_wide.tab.txt" href = "datasets/avg_temps_usa_wide.tab.txt">Average Temperatures USA</a>  
+
+1.  convert to **long** format by using gather() on the temperate columns    
+2.  separate columns so you have a column for year and month  
+2.  create a table of mean temperatures for month, city, and months for each city (various group_by calls)  
+1.  filter table to just one city or just one month  
+
+
+
